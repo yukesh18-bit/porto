@@ -28,14 +28,10 @@ const {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-   const username = name
-  .toLowerCase()
-  .trim()
-  .replace(/\s+/g, "-");
+   
 
 const user = await User.create({
   name,
-  username,
   email,
   password: hashedPassword,
 
