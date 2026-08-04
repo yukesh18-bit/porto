@@ -23,12 +23,12 @@ const [password, setPassword] = useState("");
 const handleLogin = async () => {
   try {
     const res = await axios.post(
-      "https://portoo-backend.onrender.com",
-      {
-        email,
-        password,
-      }
-    );
+  "https://portoo-backend.onrender.com/api/auth/login",
+  {
+    email,
+    password,
+  }
+);
 
     localStorage.setItem("token", res.data.token);
 
