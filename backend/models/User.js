@@ -58,10 +58,13 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    certificates: {
-      type: Array,
-      default: [],
-    },
+    // References to Certificate collection
+    certificates: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Certificate",
+      },
+    ],
 
     projects: {
       type: Array,

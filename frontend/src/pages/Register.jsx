@@ -33,7 +33,7 @@ const handleRegister = async () => {
   }
 
   try {
-    await axios.post("https://portoo-backend.onrender.com/api/auth/register", {
+    await axios.post("https://portoo-backend-1.onrender.com/api/auth/register", {
       name,
       college,
       department,

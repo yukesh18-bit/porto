@@ -4,6 +4,8 @@ import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useContext } from "react";
+import { UserContext } from "../Context/UserContext";
 
 import {
   FaEnvelope,
@@ -16,6 +18,7 @@ import { useState } from "react";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { setUser } = useContext(UserContext);
 
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
@@ -23,15 +26,18 @@ const [password, setPassword] = useState("");
 const handleLogin = async () => {
   try {
     const res = await axios.post(
-  "https://portoo-backend.onrender.com/api/auth/login",
+  "https://portoo-backend-1.onrender.com/api/auth/login",
   {
     email,
     password,
   }
 );
+console.log(res.data);
 
     localStorage.setItem("token", res.data.token);
-
+localStorage.setItem("user", JSON.stringify(res.data.user));
+setUser(res.data.user);
+console.log(res.data.user);
     alert("Login Successful");
 
     navigate("/dashboard");

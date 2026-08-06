@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import GradientBackground from "../components/GradientBackground";
 import GlassCard from "../components/GlassCard";
 import { UserContext } from "../Context/UserContext";
+import axios from "axios";
 
 export default function Certificates() {
     const { user, setUser } = useContext(UserContext);
@@ -28,6 +29,7 @@ export default function Certificates() {
 ]);
 const [certificateName, setCertificateName] = useState("");
 const [organization, setOrganization] = useState("");
+const [selectedFile, setSelectedFile] = useState(null);
 
   return (
     <GradientBackground>
@@ -112,15 +114,58 @@ const [organization, setOrganization] = useState("");
   onChange={(e) => setOrganization(e.target.value)}
   className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
 />
+    <input
+  type="file"
+  accept=".pdf,.png,.jpg,.jpeg"
+  onChange={(e) => setSelectedFile(e.target.files[0])}
+  className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
+/>
 
                 <div className="mt-6 flex gap-3">
 
                   <button
-  onClick={() => {
+  onClick={async() => {
     if (!certificateName || !organization) {
       alert("Please fill all fields");
       return;
     }
+    if (!selectedFile) {
+  alert("Please select a certificate");
+  return;
+}
+console.log(user);
+console.log(user._id);
+console.log("userId =", user._id);
+
+const formData = new FormData();
+
+formData.append("certificate", selectedFile);
+formData.append("title", certificateName);
+formData.append("company", organization);
+formData.append("userId", user._id);
+
+try {
+  const res = await axios.post(
+  "https://portoo-backend-1.onrender.com/api/certificates/upload",
+
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  console.log(res.data);
+
+  } catch (err) {
+  console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
+
+  alert("Upload Failed");
+  return;
+}
       setUser({
   ...user,
 
