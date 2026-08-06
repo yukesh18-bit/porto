@@ -1,6 +1,9 @@
 const Certificate = require("../models/Certificate");
 const User = require("../models/User");
+const fs = require("fs");
+const path = require("path");
 
+// Upload Certificate
 const uploadCertificate = async (req, res) => {
   try {
     if (!req.file) {
@@ -16,17 +19,8 @@ const uploadCertificate = async (req, res) => {
         message: "User ID is missing",
       });
     }
-    console.log("Connected DB:", User.db.name);
 
-console.log("Received User ID:", userId);
-
-const allUsers = await User.find();
-
-console.log("ALL USERS =", allUsers);
-
-const user = await User.findById(userId);
-
-console.log("USER FOUND =", user);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -34,7 +28,6 @@ console.log("USER FOUND =", user);
       });
     }
 
-    // Create Certificate
     const certificate = await Certificate.create({
       user: user._id,
       title,
@@ -42,7 +35,6 @@ console.log("USER FOUND =", user);
       file: `/uploads/certificates/${req.file.filename}`,
     });
 
-    // Save certificate id inside user
     user.certificates.push(certificate._id);
     await user.save();
 
@@ -60,6 +52,50 @@ console.log("USER FOUND =", user);
   }
 };
 
+// Delete Certificate
+const deleteCertificate = async (req, res) => {
+  try {
+    console.log("Delete ID:", req.params.id);
+    const certificate = await Certificate.findById(req.params.id);
+
+    if (!certificate) {
+      return res.status(404).json({
+        message: "Certificate not found",
+      });
+    }
+
+    // Remove certificate id from user
+    await User.findByIdAndUpdate(certificate.user, {
+      $pull: {
+        certificates: certificate._id,
+      },
+    });
+
+    // Delete uploaded file
+    const filePath = path.join(__dirname, "..", certificate.file);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Delete certificate document
+    await Certificate.findByIdAndDelete(req.params.id);
+console.log("Deleted from DB"); 
+
+    res.status(200).json({
+      message: "Certificate Deleted Successfully",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   uploadCertificate,
+  deleteCertificate,
 };
