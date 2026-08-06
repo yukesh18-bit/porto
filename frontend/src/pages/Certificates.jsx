@@ -72,19 +72,25 @@ const [selectedFile, setSelectedFile] = useState(null);
 
         {/* Cards */}
         <div className="grid gap-6 mt-8 md:grid-cols-2 xl:grid-cols-3">
-
-         {(user.certificates && user.certificates.length > 0
+{(user.certificates && user.certificates.length > 0
   ? user.certificates
   : certificates
-).map((certificate, index) => (
-  <CertificateCard
-    key={index}
-    title={certificate.title}
-    company={certificate.company}
-    status={certificate.status}
-    color={certificate.color}
-  />
-))}
+).map((certificate, index) => {
+
+  console.log(certificate);
+
+  return (
+    <CertificateCard
+      key={index}
+      id={certificate._id}
+      title={certificate.title}
+      company={certificate.company}
+      status={certificate.status}
+      color={certificate.color}
+      file={certificate.file}
+    />
+  );
+})}
 
         </div>
 
@@ -114,12 +120,26 @@ const [selectedFile, setSelectedFile] = useState(null);
   onChange={(e) => setOrganization(e.target.value)}
   className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
 />
-    <input
+   <input
   type="file"
   accept=".pdf,.png,.jpg,.jpeg"
   onChange={(e) => setSelectedFile(e.target.files[0])}
-  className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white"
+  className="mt-4 w-full text-white
+             file:mr-4
+             file:rounded-lg
+             file:border-0
+             file:bg-violet-600
+             file:px-4
+             file:py-2
+             file:text-white
+             hover:file:bg-violet-500"
 />
+
+{selectedFile && (
+  <p className="mt-2 text-sm text-green-400">
+    Selected: {selectedFile.name}
+  </p>
+)}
 
                 <div className="mt-6 flex gap-3">
 
@@ -143,11 +163,9 @@ formData.append("certificate", selectedFile);
 formData.append("title", certificateName);
 formData.append("company", organization);
 formData.append("userId", user._id);
-
 try {
   const res = await axios.post(
-  "https://portoo-backend-1.onrender.com/api/certificates/upload",
-
+    "https://your-render-backend-1.onrender.com/api/certificates/upload",
     formData,
     {
       headers: {
@@ -158,7 +176,23 @@ try {
 
   console.log(res.data);
 
-  } catch (err) {
+  setUser({
+    ...user,
+    certificates: [
+      ...(user.certificates || []),
+      {
+        ...res.data.certificate,
+        status: "Pending",
+        color: "bg-yellow-500",
+      },
+    ],
+    activity: [
+      `📜 Certificate Added : ${certificateName}`,
+      ...(user.activity || []),
+    ],
+  });
+
+} catch (err) {
   console.log(err);
   console.log(err.response);
   console.log(err.response?.data);
@@ -166,28 +200,12 @@ try {
   alert("Upload Failed");
   return;
 }
-      setUser({
-  ...user,
 
-  certificates: [
-    ...(user.certificates || []),
-    {
-      title: certificateName,
-      company: organization,
-      status: "Pending",
-      color: "bg-yellow-500",
-    },
-  ],
+setCertificateName("");
+setOrganization("");
+setSelectedFile(null);
+setShowModal(false);
 
-  activity: [
-    `📜 Certificate Added : ${certificateName}`,
-    ...(user.activity || []),
-  ],
-});
-
-    setCertificateName("");
-    setOrganization("");
-    setShowModal(false);
   }}
   className="flex-1 rounded-xl bg-violet-600 py-3 text-white hover:bg-violet-500 transition"
 >
@@ -214,7 +232,24 @@ try {
   );
 }
 
-function CertificateCard({ title, company, status, color }) {
+function CertificateCard({ id, title, company, status, color, file }) {
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this certificate?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `https://your-render-backend-1.onrender.com/api/certificates/${id}`
+      );
+
+      alert("Certificate Deleted Successfully");
+
+    } catch (err) {
+      console.log(err);
+      alert("Delete Failed");
+    }
+  };
   return (
     <GlassCard>
       <div className="p-6">
@@ -239,15 +274,47 @@ function CertificateCard({ title, company, status, color }) {
 
         <div className="mt-6 flex gap-3">
 
-          <button className="flex-1 rounded-xl bg-violet-600 py-3 text-white hover:bg-violet-500 transition">
-            View
-          </button>
+  <button
+  onClick={() => {
+    if (!file) {
+      alert("File not found");
+      return;
+    }
 
-          <button className="flex-1 rounded-xl bg-cyan-500 py-3 text-slate-900 hover:bg-cyan-400 transition">
-            Download
-          </button>
+    window.open(`https://your-render-backend-1.onrender.com${file}`, "_blank");
+  }}
+  className="flex-1 rounded-xl bg-violet-600 py-3 text-white hover:bg-violet-500 transition"
+>
+  View
+</button>
 
-        </div>
+ <button
+  onClick={() => {
+    if (!file) {
+      alert("File not found");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = `https://your-render-backend-1.onrender.com${file}`;
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }}
+  className="flex-1 rounded-xl bg-cyan-500 py-3 text-slate-900 hover:bg-cyan-400 transition"
+>
+  Download
+</button>
+
+  <button
+    onClick={handleDelete}
+    className="flex-1 rounded-xl bg-red-600 py-3 text-white hover:bg-red-500 transition"
+  >
+    Delete
+  </button>
+
+</div>
 
       </div>
     </GlassCard>
